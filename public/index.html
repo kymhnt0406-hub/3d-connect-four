@@ -2,6 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>立体四目</title>
 
   <link rel="stylesheet" href="style.css">
@@ -19,15 +21,77 @@
 <body>
 
   <h1>立体四目</h1>
+
+  <!-- 部屋情報 -->
+  <div id="roomArea">
+    <p id="roomName">部屋：---</p>
+
+    <button id="createRoom">新しい部屋を作る</button>
+    <button id="copyInvite">招待URLをコピー</button>
+  </div>
+
+  <!-- 対戦情報 -->
   <p id="turn">ターン：---</p>
   <p id="info">読み込み中...</p>
 
+  <!-- 3Dゲーム -->
   <div id="gameArea"></div>
 
-  <button id="reset">リセット</button>
-  <button id="bgmToggle">BGM OFF</button>
+  <!-- 操作 -->
+  <div id="controls">
+    <button id="reset">リセット</button>
+    <button id="bgmToggle">BGM OFF</button>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const currentRoom = params.get("room");
+
+    const roomName = document.getElementById("roomName");
+    const createRoomBtn = document.getElementById("createRoom");
+    const copyInviteBtn = document.getElementById("copyInvite");
+
+    if (currentRoom) {
+      roomName.textContent = "部屋：" + currentRoom;
+    } else {
+      roomName.textContent = "部屋：default";
+    }
+
+    // 新しい部屋を作成
+    createRoomBtn.addEventListener("click", () => {
+      const roomId = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
+
+      location.href =
+        location.origin +
+        location.pathname +
+        "?room=" +
+        roomId;
+    });
+
+    // 招待URLをコピー
+    copyInviteBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+
+        const oldText = copyInviteBtn.textContent;
+
+        copyInviteBtn.textContent = "コピーしました！";
+
+        setTimeout(() => {
+          copyInviteBtn.textContent = oldText;
+        }, 1500);
+
+      } catch (error) {
+        alert("URLをコピーできませんでした");
+      }
+    });
+  </script>
+
   <script type="module" src="game.js"></script>
 
 </body>
