@@ -320,35 +320,45 @@ socket.on("state", (s) => {
     putSound.play().catch(() => {});
   }
 
-  if (state.winner) {
-    infoEl.textContent = `${state.winner === "black" ? "黒" : "白"}の勝ち！`;
+if (state.winner) {
+  infoEl.textContent =
+    `${state.winner === "black" ? "黒" : "白"}の勝ち！`;
 
-    if (turnEl) {
-      turnEl.textContent = "ゲーム終了";
-    }
-
-    if (!winSoundPlayed) {
-      bgm.pause();
-      winSound.currentTime = 0;
-      winSound.play().catch(() => {});
-      winSoundPlayed = true;
-    }
-  } else {
-    winSoundPlayed = false;
-
-    if (turnEl) {
-      turnEl.textContent =
-        `あなた：${roleText(myRole)} / 今の番：${state.turn === "black" ? "黒" : "白"}`;
-    }
-
-    if (myRole === "spectator") {
-      infoEl.textContent = "観戦中です";
-    } else if (myRole === state.turn) {
-      infoEl.textContent = "あなたの番です";
-    } else {
-      infoEl.textContent = "相手の番です";
-    }
+  if (turnEl) {
+    turnEl.textContent = "ゲーム終了";
   }
+
+  if (!winSoundPlayed) {
+    bgm.pause();
+    winSound.currentTime = 0;
+    winSound.play().catch(() => {});
+    winSoundPlayed = true;
+  }
+
+} else {
+  winSoundPlayed = false;
+
+  if (turnEl) {
+    turnEl.textContent =
+      `あなた：${roleText(myRole)} / 今の番：${state.turn === "black" ? "黒" : "白"}`;
+  }
+
+  // 観戦者
+  if (myRole === "spectator") {
+    infoEl.textContent = "観戦中です";
+
+  // まだ2人揃っていない
+  } else if (state.playerCount < 2) {
+    infoEl.textContent = "対戦相手を待っています…";
+
+  // 2人揃っている
+  } else if (myRole === state.turn) {
+    infoEl.textContent = "あなたの番です";
+
+  } else {
+    infoEl.textContent = "相手の番です";
+  }
+}
 });
 
 function roleText(role) {

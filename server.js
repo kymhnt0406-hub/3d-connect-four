@@ -9,14 +9,6 @@ const io = new Server(server);
 
 app.use(express.static(__dirname + "/public"));
 
-app.get("/win.mp3", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "win.mp3"));
-});
-
-app.get("/win.mp3/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "win.mp3"));
-});
-
 const rooms = {};
 
 function createBoard() {
@@ -45,39 +37,74 @@ function getState(room) {
     board: room.board,
     turn: room.turn,
     winner: room.winner,
-    winLine: room.winLine
+    winLine: room.winLine,
+
+    // 何人プレイヤーがいるかをクライアントに送る
+    playerCount:
+      (room.players.black ? 1 : 0) +
+      (room.players.white ? 1 : 0)
   };
+}
+
+function sendState(roomId) {
+  const room = rooms[roomId];
+
+  if (room) {
+    io.to(roomId).emit("state", getState(room));
+  }
 }
 
 io.on("connection", (socket) => {
   const roomId = socket.handshake.query.room || "default";
 
-  if (!rooms[roomId]) rooms[roomId] = createRoom();
+  if (!rooms[roomId]) {
+    rooms[roomId] = createRoom();
+  }
 
   const room = rooms[roomId];
+
   socket.join(roomId);
 
+  // 役割を決める
   if (!room.players.black) {
     room.players.black = socket.id;
     socket.emit("role", "black");
+
   } else if (!room.players.white) {
     room.players.white = socket.id;
     socket.emit("role", "white");
+
   } else {
     socket.emit("role", "spectator");
   }
 
-  socket.emit("state", getState(room));
+  // 入室したことを全員に通知
+  sendState(roomId);
 
   socket.on("place", ({ x, y }) => {
     if (room.winner) return;
 
-    const myColor =
-      room.players.black === socket.id ? "black" :
-      room.players.white === socket.id ? "white" :
-      null;
+    // 不正な座標を防ぐ
+    if (
+      !Number.isInteger(x) ||
+      !Number.isInteger(y) ||
+      x < 0 || x > 3 ||
+      y < 0 || y > 3
+    ) {
+      return;
+    }
 
+    const myColor =
+      room.players.black === socket.id
+        ? "black"
+        : room.players.white === socket.id
+        ? "white"
+        : null;
+
+    // 観戦者は置けない
     if (!myColor) return;
+
+    // 自分のターン以外は置けない
     if (myColor !== room.turn) return;
 
     let z = -1;
@@ -89,6 +116,7 @@ io.on("connection", (socket) => {
       }
     }
 
+    // その棒が満杯
     if (z === -1) return;
 
     room.board[z][y][x] = room.turn;
@@ -98,26 +126,53 @@ io.on("connection", (socket) => {
     if (result) {
       room.winner = result.winner;
       room.winLine = result.line;
-      io.to(roomId).emit("state", getState(room));
+
+      sendState(roomId);
       return;
     }
 
-    room.turn = room.turn === "black" ? "white" : "black";
-    io.to(roomId).emit("state", getState(room));
+    room.turn =
+      room.turn === "black"
+        ? "white"
+        : "black";
+
+    sendState(roomId);
   });
 
   socket.on("reset", () => {
+    // 観戦者によるリセットを禁止
+    const isPlayer =
+      room.players.black === socket.id ||
+      room.players.white === socket.id;
+
+    if (!isPlayer) return;
+
     room.board = createBoard();
     room.turn = "black";
     room.winner = null;
     room.winLine = [];
 
-    io.to(roomId).emit("state", getState(room));
+    sendState(roomId);
   });
 
   socket.on("disconnect", () => {
-    if (room.players.black === socket.id) room.players.black = null;
-    if (room.players.white === socket.id) room.players.white = null;
+    if (room.players.black === socket.id) {
+      room.players.black = null;
+    }
+
+    if (room.players.white === socket.id) {
+      room.players.white = null;
+    }
+
+    // 残った人に退出を反映
+    sendState(roomId);
+
+    // 誰もいなくなった部屋は削除
+    const socketsInRoom = io.sockets.adapter.rooms.get(roomId);
+
+    if (!socketsInRoom || socketsInRoom.size === 0) {
+      delete rooms[roomId];
+    }
   });
 });
 
