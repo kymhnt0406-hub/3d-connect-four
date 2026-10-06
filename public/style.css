@@ -1,0 +1,110 @@
+body {
+  margin: 0;
+  background: linear-gradient(#f7f4ee, #e8dfd0);
+  color: #222;
+  text-align: center;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+h1 {
+  margin: 10px 0 4px;
+  font-size: 28px;
+  letter-spacing: 0.08em;
+}
+
+#status {
+  margin: 0 auto 4px;
+}
+
+#turn {
+  margin: 2px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+#info {
+  margin: 4px 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#hint {
+  margin: 2px;
+  font-size: 13px;
+  color: #666;
+}
+
+#gameArea {
+  width: 100vw;
+  height: 70vh;
+  touch-action: none;
+}
+
+#controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 999px;
+  background: #222;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+#result {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: bold;
+  color: white;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 10;
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 22px;
+    margin-top: 8px;
+  }
+
+  #turn {
+    font-size: 14px;
+  }
+
+  #info {
+    font-size: 14px;
+  }
+
+  #hint {
+    font-size: 12px;
+  }
+
+  #gameArea {
+    height: 66vh;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  #result {
+    font-size: 34px;
+  }
+}
